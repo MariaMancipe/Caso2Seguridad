@@ -11,6 +11,13 @@ public class UnidadDistribucion extends Thread {
 	public final static int PUERTO_SEGURIDAD = 443;
 	
 	public final static int PUERTO_SIN_SEGURIDAD = 80;
+	
+	public final static String SIMETRICO="";
+	
+	public final static String ASIMETRICO="RSA";
+	
+	public final static String HASH="";
+	
 
 	
 	// -----------------------------------------------------------------
@@ -26,6 +33,8 @@ public class UnidadDistribucion extends Thread {
 	private PrintWriter print;
 	
 	private boolean[] pasos;
+	
+	private Certificado certificado;
 	
 	// -----------------------------------------------------------------
     // Constructor
@@ -52,57 +61,72 @@ public class UnidadDistribucion extends Thread {
     // Metodos
     // -----------------------------------------------------------------
 	
-	public void enviarAlgoritmos(){
-		
-	};
 	
-	public void enviarCertificado(){
+	public void verificarInicio( String mensaje, String[] mensajes) throws IOException{
 		
-	}
-	
-	public void verificarMensaje(String[] mensajes){
-		
-		String inicio = mensajes[0];
-		if( inicio.equals("INICIO")){
+		if( mensajes[0].equals("INICIO")){
 			//El cliente deberia enviar los algoritmos 
+			print.println("ALGORITMOS:"+SIMETRICO+":"+ASIMETRICO+":"+HASH);
 			pasos[0]=true;
-		}
-		else if( inicio.equals("ESTADO")){
-			if( mensajes[1].equals("OK")){
-				//enviar certificado
-				pasos[1]=true;
-			}
-			else if(mensajes[1].equals("ERROR")){
-				//reportar error
+			
+			String mensaje1 = buff.readLine();
+			if(mensaje1 == null){
+				System.out.println("No se ha recibido ningún mensaje");
 			}
 			else{
-				//reportar palabra que no esta en el protocolo
-			}
-		}
-		else if(inicio.equals("CERTSRV")){
-			//recibir flujo de bytes del certificado
-			pasos[2]=true;
-		}
-		else if(inicio.equals("INIT")){
-			//enviar reporte y manejo 
-			pasos[3]=true;
-		}
-		else if(inicio.equals("RTA")){
-			if( mensajes[1].equals("OK")){
-				//terminar comunicacion
-				pasos[4]=true;
-			}
-			else if(mensajes[1].equals("ERROR")){
-				//reportar error
-			}
-			else{
-				//reportar palabra que no esta en el protocolo
+				
+				String[] mensajes1=mensaje1.split(":");
+				verificarEstadoAlgoritmos(mensaje1, mensajes1);
 			}
 		}
 		else{
-			//reportar palabra que no esta en el protocolo
+			//Reportar error
+			System.out.println("No se recibio INICIO, sino:" + mensaje);
+			System.out.println("Se cerro la conexion");
+			
 		}
 	};
+	
+	public void verificarEstadoAlgoritmos(String mensaje, String[] mensajes) throws IOException{
+		if(mensajes[0].equals("ESTADO")){
+			if(mensajes[1].equals("OK")){
+				
+				print.println("CERCLNT");
+				//GENERAR CERTIFICADO
+				byte[] bytes = new byte[8];
+				socket.getOutputStream().write(bytes);
+				socket.getOutputStream().flush();
+				pasos[1]=true;
+				String mensaje1 = buff.readLine();
+				if( mensaje1 == null ){
+					System.out.println("No se ha recibido ningún mensaje");
+				}else{
+					autenticarServidor(mensaje1);
+				}
+			}
+			else if(mensajes[1].equals("ERROR")){
+				System.out.println("Hubo un error en la linea de algoritmos: "+ mensaje);
+			}
+			else{
+				System.out.println("No se recibio ni ERROR ni OK en la verificacion del estado de los algoritmos, sino: " + mensaje);
+			}
+		}
+		else{
+			//Reportar error
+			System.out.println("No se recibio ESTADO, sino:" + mensaje);
+			System.out.println("Se cerro la conexion");
+		}
+		
+	};
+	
+	public void autenticarServidor(String mensaje) throws IOException{
+		if(mensaje.equals("CERTSRV")){
+		}
+		else{
+			System.out.println("No se recibio CERTSRV, sino:" + mensaje);
+		}
+		
+	}
 	
 	// -----------------------------------------------------------------
     // Run
@@ -110,22 +134,25 @@ public class UnidadDistribucion extends Thread {
 	
 	public void run(){
 		
-		print.print("HOLA");
+		print.println("HOLA");
+		print.flush();
 		
 		try{
 			buff = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			boolean caido = false;
-			while(!caido){
 				String mensaje = buff.readLine();
 				if( mensaje == null ){
 					//reportar error
+					System.out.println("No se ha recibido ningún mensaje");
+					caido = true;
+					//cerrar conexion con el servidor
 				}
 				else{
 					String[] mensajes = mensaje.split(":");
-					verificarMensaje(mensajes);
+					verificarInicio(mensaje, mensajes);
+					
 				}
-						
-			}
+		
 		}
 		catch(Exception e){
 			
