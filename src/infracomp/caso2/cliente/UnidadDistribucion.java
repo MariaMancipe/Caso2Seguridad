@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-public class UnidadDistribucion extends Thread {
+public class UnidadDistribucion {
 	
 	public final static int PUERTO_SEGURIDAD = 443;
 	
@@ -48,9 +48,10 @@ public class UnidadDistribucion extends Thread {
 		
 		try
 		{
-			
+			socket = new Socket("localhost", PUERTO_SIN_SEGURIDAD);
 			print = new PrintWriter(socket.getOutputStream());
 			input = new InputStreamReader(socket.getInputStream());
+			System.out.println("INICIALIZACION");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -61,12 +62,19 @@ public class UnidadDistribucion extends Thread {
     // Metodos
     // -----------------------------------------------------------------
 	
+	public void cerrarConexion() throws IOException{
+		buff.close();
+		print.close();
+		socket.close();
+	};
 	
 	public void verificarInicio( String mensaje, String[] mensajes) throws IOException{
 		
 		if( mensajes[0].equals("INICIO")){
+			System.out.println("INICIO");
 			//El cliente deberia enviar los algoritmos 
 			print.println("ALGORITMOS:"+SIMETRICO+":"+ASIMETRICO+":"+HASH);
+			System.out.println("ALGORTIMOS");
 			pasos[0]=true;
 			
 			String mensaje1 = buff.readLine();
@@ -82,6 +90,7 @@ public class UnidadDistribucion extends Thread {
 		else{
 			//Reportar error
 			System.out.println("No se recibio INICIO, sino:" + mensaje);
+			cerrarConexion();
 			System.out.println("Se cerro la conexion");
 			
 		}
@@ -89,9 +98,11 @@ public class UnidadDistribucion extends Thread {
 	
 	public void verificarEstadoAlgoritmos(String mensaje, String[] mensajes) throws IOException{
 		if(mensajes[0].equals("ESTADO")){
+			System.out.println("ESTADO");
 			if(mensajes[1].equals("OK")){
-				
+				System.out.println("OK");
 				print.println("CERCLNT");
+				System.out.println("CERCLNT");
 				//GENERAR CERTIFICADO
 				byte[] bytes = new byte[8];
 				socket.getOutputStream().write(bytes);
@@ -106,14 +117,19 @@ public class UnidadDistribucion extends Thread {
 			}
 			else if(mensajes[1].equals("ERROR")){
 				System.out.println("Hubo un error en la linea de algoritmos: "+ mensaje);
+				cerrarConexion();
+				System.out.println("Se cerro la conexion");
 			}
 			else{
 				System.out.println("No se recibio ni ERROR ni OK en la verificacion del estado de los algoritmos, sino: " + mensaje);
+				cerrarConexion();
+				System.out.println("Se cerro la conexion");
 			}
 		}
 		else{
 			//Reportar error
 			System.out.println("No se recibio ESTADO, sino:" + mensaje);
+			cerrarConexion();
 			System.out.println("Se cerro la conexion");
 		}
 		
@@ -124,6 +140,8 @@ public class UnidadDistribucion extends Thread {
 		}
 		else{
 			System.out.println("No se recibio CERTSRV, sino:" + mensaje);
+			cerrarConexion();
+			System.out.println("Se cerro la conexion");
 		}
 		
 	}
@@ -136,15 +154,17 @@ public class UnidadDistribucion extends Thread {
 		
 		print.println("HOLA");
 		print.flush();
+		System.out.println("HOLA");
 		
 		try{
-			buff = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			buff = new BufferedReader(input);
 			boolean caido = false;
 				String mensaje = buff.readLine();
 				if( mensaje == null ){
 					//reportar error
 					System.out.println("No se ha recibido ningún mensaje");
-					caido = true;
+					cerrarConexion();
+					System.out.println("Se cerro la conexion");
 					//cerrar conexion con el servidor
 				}
 				else{
@@ -155,11 +175,23 @@ public class UnidadDistribucion extends Thread {
 		
 		}
 		catch(Exception e){
-			
+			try{
+				cerrarConexion();
+				System.out.println("Se cerro la conexion");
+			}catch(Exception e1){
+				System.out.println("NO SE PUDO CERRAR LA CONEXION");
+				e1.printStackTrace();
+			}
 		}
 		
 	}
 	
 
+	public static void main(String[] args){
+		UnidadDistribucion ud = new UnidadDistribucion();
+		ud.run();
+		
+	};
+	
 
 }
