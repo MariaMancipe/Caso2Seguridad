@@ -12,11 +12,11 @@ public class UnidadDistribucion {
 	
 	public final static int PUERTO_SIN_SEGURIDAD = 80;
 	
-	public final static String SIMETRICO="";
+	public final static String SIMETRICO="AES";
 	
 	public final static String ASIMETRICO="RSA";
 	
-	public final static String HASH="";
+	public final static String HMAC="HMACSHA1";
 	
 
 	
@@ -48,7 +48,8 @@ public class UnidadDistribucion {
 		
 		try
 		{
-			socket = new Socket("localhost", PUERTO_SIN_SEGURIDAD);
+			socket = new Socket("infracomp.virtual.uniandes.edu.co", PUERTO_SIN_SEGURIDAD);
+			System.out.println(socket.isConnected());
 			print = new PrintWriter(socket.getOutputStream());
 			input = new InputStreamReader(socket.getInputStream());
 			System.out.println("INICIALIZACION");
@@ -73,10 +74,10 @@ public class UnidadDistribucion {
 		if( mensajes[0].equals("INICIO")){
 			System.out.println("INICIO");
 			//El cliente deberia enviar los algoritmos 
-			print.println("ALGORITMOS:"+SIMETRICO+":"+ASIMETRICO+":"+HASH);
+			print.println("ALGORITMOS:"+SIMETRICO+":"+ASIMETRICO+":"+HMAC);
 			System.out.println("ALGORTIMOS");
 			pasos[0]=true;
-			
+
 			String mensaje1 = buff.readLine();
 			if(mensaje1 == null){
 				System.out.println("No se ha recibido ningún mensaje");
