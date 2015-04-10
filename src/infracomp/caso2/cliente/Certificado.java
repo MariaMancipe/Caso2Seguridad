@@ -2,6 +2,9 @@ package infracomp.caso2.cliente;
 
 import java.math.BigInteger;
 import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
@@ -21,8 +24,22 @@ public class Certificado
 	
 	private KeyPair llaves;
 	
-	private void generarLlaves( ){
+	public Certificado() {
+		try {
+			generarLlaves();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.out.println("HUBO UN ERROR AL GENERAR LAS LLAVES: " + e.getMessage());
+		}
+		generarCertificado();
+	}
+	
+	private void generarLlaves( ) throws NoSuchAlgorithmException{
 		
+		KeyPairGenerator generador = KeyPairGenerator.getInstance(UnidadDistribucion.ASIMETRICO);
+		generador.initialize(1024, new SecureRandom());
+		llaves = generador.generateKeyPair();
 	}
 	
 	private void generarCertificado( ){
@@ -38,6 +55,10 @@ public class Certificado
 		certificateGenerator.setIssuerDN(firma);
 		certificateGenerator.setNotBefore(fechaInicio);
 		certificateGenerator.setNotBefore(fechaFin);
+		certificateGenerator.setPublicKey(llaves.getPublic());
+		//Aqui puede haber un error
+		
+		certificateGenerator.setSignatureAlgorithm("SHA256WITHRSA");
 	};
 	
 	public X509Certificate darCertificado(){

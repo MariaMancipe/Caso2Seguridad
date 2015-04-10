@@ -16,7 +16,7 @@ public class UnidadDistribucion {
 	
 	public final static String ASIMETRICO="RSA";
 	
-	public final static String HMAC="HMACSHA1";
+	public final static String HMAC="HMACSHA256";
 	
 
 	
@@ -42,6 +42,7 @@ public class UnidadDistribucion {
 	
 	public UnidadDistribucion(){
 		pasos = new boolean[5];
+		
 		for( int i = 0; i< 5; i++){
 			pasos[i] = false;
 		}
