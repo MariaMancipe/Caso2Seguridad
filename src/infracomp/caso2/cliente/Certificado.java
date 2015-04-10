@@ -7,6 +7,7 @@ import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.cert.CertificateEncodingException;
@@ -15,9 +16,11 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 
 import javax.crypto.Cipher;
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
+import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 
@@ -30,6 +33,8 @@ public class Certificado
 	private Date fechaFin;
 	
 	private KeyPair llaves;
+	
+	private KeyPair llavesServidor;
 	
 	private SecretKey llaveSimetrica;
 	
@@ -77,7 +82,7 @@ public class Certificado
 		certificado = certificateGenerator.generate(llaves.getPrivate());
 	};
 	
-	public void crearCertificado( byte[] recibidos){
+	public PublicKey crearCertificado( byte[] recibidos){
 		
 		InputStream inCer = new ByteArrayInputStream(recibidos);
 		try{
@@ -85,40 +90,45 @@ public class Certificado
 			X509Certificate certificado = (X509Certificate) cf.generateCertificate(inCer);
 			inCer.close();
 			certificado.checkValidity();
+			return certificado.getPublicKey();
 		}
 		catch(Exception e){
 			System.out.println("Error creando CertificateFactory: " + e.getMessage());
+			return null;
 		}
 		
 	}
 	
-	public void descifrarMensaje( byte[] recibidos ){
+	public SecretKey descifrarMensaje( byte[] recibidos ){
 		try {
 			Cipher cipher = Cipher.getInstance(UnidadDistribucion.ASIMETRICO);
 			cipher.init(Cipher.DECRYPT_MODE, llaves.getPrivate());
 			byte [] clearText = cipher.doFinal(recibidos);
 			SecretKey llave = new SecretKeySpec(clearText, 0, clearText.length, UnidadDistribucion.SIMETRICO);
 			llaveSimetrica = llave;
+			return llave;
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.out.println("Hay un error descifrando la llave simetrica: "+ e.getMessage());
+			return null;
 		}
 	}
 	
-	public String cifrarCoordenadasSimetrica( String coordenadas ){
+	public String cifrarCoordenadasSimetrica(SecretKey llave,  String coordenadas ){
 		byte [] cipheredText;
 		try {
 
 		Cipher cipher = Cipher.getInstance(UnidadDistribucion.PADDING);
 		
 		byte [] clearText = coordenadas.getBytes();
-		cipher.init(Cipher.ENCRYPT_MODE, llaveSimetrica);
+		cipher.init(Cipher.ENCRYPT_MODE, llave);
 
 		cipheredText = cipher.doFinal(clearText);
+		String hexa = DatatypeConverter.printHexBinary(cipheredText);
 
-		String s2 = new String (cipheredText);
+		String s2 = hexa;
 		
 		return s2;
 		}
@@ -129,15 +139,22 @@ public class Certificado
 		
 	}
 	
-	public void cifrarHashAsimetrico( ){
+	public void cifrarHashAsimetrico(PublicKey llavePS, String coordenadas ){
+		try {
+			Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
+		} catch (NoSuchAlgorithmException e) {
+			System.out.println("Hubo un error generarando el codigo de integridad: " + e.getMessage());
+			e.printStackTrace();
+		}
 		
 	}
 	
 	public KeyPair darLlaves(){
 		return llaves;
-	};
+	}
 	
 	public X509Certificate darCertificado(){
 		return certificado;
-	};
+	}
+	
 }
