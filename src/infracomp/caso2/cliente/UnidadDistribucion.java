@@ -1,10 +1,20 @@
 package infracomp.caso2.cliente;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.X509Certificate;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
 
 public class UnidadDistribucion {
 	
@@ -28,7 +38,7 @@ public class UnidadDistribucion {
 	
 	private BufferedReader buff;
 	
-	private InputStreamReader input;
+	private InputStream input;
 	
 	private PrintWriter print;
 	
@@ -42,7 +52,7 @@ public class UnidadDistribucion {
 	
 	public UnidadDistribucion(){
 		pasos = new boolean[5];
-		
+		certificado = new Certificado();
 		for( int i = 0; i< 5; i++){
 			pasos[i] = false;
 		}
@@ -52,7 +62,8 @@ public class UnidadDistribucion {
 			socket = new Socket("infracomp.virtual.uniandes.edu.co", PUERTO_SIN_SEGURIDAD);
 			System.out.println(socket.isConnected());
 			print = new PrintWriter(socket.getOutputStream());
-			input = new InputStreamReader(socket.getInputStream());
+			input = socket.getInputStream();
+			buff = new BufferedReader(new InputStreamReader(input));
 			System.out.println("INICIALIZACION");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -96,20 +107,31 @@ public class UnidadDistribucion {
 			System.out.println("Se cerro la conexion");
 			
 		}
-	};
+	}
 	
 	public void verificarEstadoAlgoritmos(String mensaje, String[] mensajes) throws IOException{
+		
 		if(mensajes[0].equals("ESTADO")){
+			
 			System.out.println("ESTADO");
+			
 			if(mensajes[1].equals("OK")){
+				
 				System.out.println("OK");
+				
 				print.println("CERCLNT");
 				System.out.println("CERCLNT");
+				
 				//GENERAR CERTIFICADO
-				byte[] bytes = new byte[8];
-				socket.getOutputStream().write(bytes);
-				socket.getOutputStream().flush();
-				pasos[1]=true;
+				try{
+					byte[] bytes = certificado.darCertificado().getEncoded();
+					socket.getOutputStream().write(bytes);
+					socket.getOutputStream().flush();
+				}catch(Exception e){
+					e.printStackTrace();
+					System.out.println("No se pudo convertir en un arreglo de bits: "+e.getMessage());
+				}
+				
 				String mensaje1 = buff.readLine();
 				if( mensaje1 == null ){
 					System.out.println("No se ha recibido ningún mensaje");
@@ -135,19 +157,48 @@ public class UnidadDistribucion {
 			System.out.println("Se cerro la conexion");
 		}
 		
-	};
+	}
 	
 	public void autenticarServidor(String mensaje) throws IOException{
 		if(mensaje.equals("CERTSRV")){
+			
+			int size = socket.getReceiveBufferSize();
+			byte[] recibidos = new byte[size];
+			
+			input.read(recibidos, 0, size);
+			X509Certificate cerSrv = certificado.crearCertificado(recibidos);
+			try{
+				cerSrv.checkValidity();
+				
+				String mensaje2 = buff.readLine();
+				String[] mensajes2 = mensaje2.split(mensaje2);
+				enviarCoordenadas(mensaje2, mensajes2);
+			}catch(Exception e){
+				e.printStackTrace();
+				System.out.println("Hubo un error validando el certificado del servidor: " + e.getMessage());
+			}	
 		}
 		else{
 			System.out.println("No se recibio CERTSRV, sino:" + mensaje);
 			cerrarConexion();
 			System.out.println("Se cerro la conexion");
+		}	
+	}
+	
+	public void enviarCoordenadas(String mensaje, String[] mensajes ) throws IOException{
+		if( mensajes[0].equals("INIT")){
+			byte[] bytesM =  mensajes[1].getBytes();
+			SecretKey llave = certificado.descifrarMensaje(bytesM);
+			
+			//descifrar
+		}
+		else{
+			System.out.println("No se recibio INIT, sino:" + mensaje);
+			cerrarConexion();
+			System.out.println("Se cerro la conexion");
 		}
 		
 	}
-	
 	// -----------------------------------------------------------------
     // Run
     // -----------------------------------------------------------------
@@ -159,7 +210,6 @@ public class UnidadDistribucion {
 		System.out.println("HOLA");
 		
 		try{
-			buff = new BufferedReader(input);
 			boolean caido = false;
 				String mensaje = buff.readLine();
 				if( mensaje == null ){
@@ -193,7 +243,7 @@ public class UnidadDistribucion {
 		UnidadDistribucion ud = new UnidadDistribucion();
 		ud.run();
 		
-	};
+	}
 	
 
 }

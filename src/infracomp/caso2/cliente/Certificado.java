@@ -1,17 +1,24 @@
 package infracomp.caso2.cliente;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.math.BigInteger;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.SignatureException;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
-import org.bouncycastle.asn1.x509.*;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 
 public class Certificado
@@ -27,12 +34,18 @@ public class Certificado
 	public Certificado() {
 		try {
 			generarLlaves();
-		} catch (NoSuchAlgorithmException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.out.println("HUBO UN ERROR AL GENERAR LAS LLAVES: " + e.getMessage());
 		}
-		generarCertificado();
+		try{
+			generarCertificado();
+		}catch(Exception e){
+			e.printStackTrace();
+			System.out.println("HUBO UN ERROR AL GENERAR EL CERTIFICADO: "+e.getMessage());
+		}
+		
 	}
 	
 	private void generarLlaves( ) throws NoSuchAlgorithmException{
@@ -42,7 +55,7 @@ public class Certificado
 		llaves = generador.generateKeyPair();
 	}
 	
-	private void generarCertificado( ){
+	private void generarCertificado( ) throws CertificateEncodingException, InvalidKeyException, IllegalStateException, NoSuchAlgorithmException, SignatureException{
 		
 		fechaInicio = new Date(System.currentTimeMillis());
 		fechaFin = new Date(System.currentTimeMillis() + (30*1000*60*60*24));
@@ -58,11 +71,47 @@ public class Certificado
 		certificateGenerator.setPublicKey(llaves.getPublic());
 		//Aqui puede haber un error
 		
-		certificateGenerator.setSignatureAlgorithm("SHA256WITHRSA");
+		certificateGenerator.setSignatureAlgorithm("SHA256withRSA");
+		certificado = certificateGenerator.generate(llaves.getPrivate());
+	};
+	
+	public X509Certificate crearCertificado( byte[] recibidos){
+		
+		InputStream inCer = new ByteArrayInputStream(recibidos);
+		try{
+			CertificateFactory cf = CertificateFactory.getInstance("X.509");
+			X509Certificate certificado = (X509Certificate) cf.generateCertificate(inCer);
+			inCer.close();
+			return certificado;
+		}
+		catch(Exception e){
+			System.out.println("Error creando CertificateFactory: " + e.getMessage());
+			return null;
+		}
+		
+	}
+	
+	public SecretKey descifrarMensaje( byte[] recibidos ){
+		try {
+			Cipher cipher = Cipher.getInstance(UnidadDistribucion.ASIMETRICO);
+			cipher.init(Cipher.DECRYPT_MODE, llaves.getPrivate());
+			byte [] clearText = cipher.doFinal(recibidos);
+			SecretKey llave = new SecretKeySpec(clearText, 0, clearText.length, UnidadDistribucion.SIMETRICO);
+			return llave;
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.out.println("Hay un error descifrando la llave simetrica: "+ e.getMessage());
+			return null;
+		}
+	}
+	
+	public KeyPair darLlaves(){
+		return llaves;
 	};
 	
 	public X509Certificate darCertificado(){
-		generarCertificado();
 		return certificado;
 	};
 }
