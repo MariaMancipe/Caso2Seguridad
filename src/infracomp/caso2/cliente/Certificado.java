@@ -31,6 +31,8 @@ public class Certificado
 	
 	private KeyPair llaves;
 	
+	private SecretKey llaveSimetrica;
+	
 	public Certificado() {
 		try {
 			generarLlaves();
@@ -75,46 +77,44 @@ public class Certificado
 		certificado = certificateGenerator.generate(llaves.getPrivate());
 	};
 	
-	public X509Certificate crearCertificado( byte[] recibidos){
+	public void crearCertificado( byte[] recibidos){
 		
 		InputStream inCer = new ByteArrayInputStream(recibidos);
 		try{
 			CertificateFactory cf = CertificateFactory.getInstance("X.509");
 			X509Certificate certificado = (X509Certificate) cf.generateCertificate(inCer);
 			inCer.close();
-			return certificado;
+			certificado.checkValidity();
 		}
 		catch(Exception e){
 			System.out.println("Error creando CertificateFactory: " + e.getMessage());
-			return null;
 		}
 		
 	}
 	
-	public SecretKey descifrarMensaje( byte[] recibidos ){
+	public void descifrarMensaje( byte[] recibidos ){
 		try {
 			Cipher cipher = Cipher.getInstance(UnidadDistribucion.ASIMETRICO);
 			cipher.init(Cipher.DECRYPT_MODE, llaves.getPrivate());
 			byte [] clearText = cipher.doFinal(recibidos);
 			SecretKey llave = new SecretKeySpec(clearText, 0, clearText.length, UnidadDistribucion.SIMETRICO);
-			return llave;
+			llaveSimetrica = llave;
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.out.println("Hay un error descifrando la llave simetrica: "+ e.getMessage());
-			return null;
 		}
 	}
 	
-	public String cifrarCoordenadasSimetrica( SecretKey llave, String coordenadas ){
+	public String cifrarCoordenadasSimetrica( String coordenadas ){
 		byte [] cipheredText;
 		try {
 
 		Cipher cipher = Cipher.getInstance(UnidadDistribucion.PADDING);
 		
 		byte [] clearText = coordenadas.getBytes();
-		cipher.init(Cipher.ENCRYPT_MODE, llave);
+		cipher.init(Cipher.ENCRYPT_MODE, llaveSimetrica);
 
 		cipheredText = cipher.doFinal(clearText);
 

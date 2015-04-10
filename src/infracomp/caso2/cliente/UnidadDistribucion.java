@@ -167,9 +167,9 @@ public class UnidadDistribucion {
 			byte[] recibidos = new byte[size];
 			
 			input.read(recibidos, 0, size);
-			X509Certificate cerSrv = certificado.crearCertificado(recibidos);
+			certificado.crearCertificado(recibidos);
 			try{
-				cerSrv.checkValidity();
+				
 				
 				String mensaje2 = buff.readLine();
 				String[] mensajes2 = mensaje2.split(mensaje2);
@@ -189,7 +189,7 @@ public class UnidadDistribucion {
 	public void enviarCoordenadas(String mensaje, String[] mensajes ) throws IOException{
 		if( mensajes[0].equals("INIT")){
 			byte[] bytesM =  mensajes[1].getBytes();
-			SecretKey llave = certificado.descifrarMensaje(bytesM);
+			certificado.descifrarMensaje(bytesM);
 			//cifrarSimetrico
 			print.println("ACT1:");
 			
