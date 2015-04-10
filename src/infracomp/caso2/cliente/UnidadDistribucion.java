@@ -28,7 +28,7 @@ public class UnidadDistribucion {
 	
 	public final static String HMAC="HMACSHA256";
 	
-
+	public final static String PADDING = "AES/ECB/PKCS5Padding";
 	
 	// -----------------------------------------------------------------
     // Atributos
@@ -189,8 +189,23 @@ public class UnidadDistribucion {
 		if( mensajes[0].equals("INIT")){
 			byte[] bytesM =  mensajes[1].getBytes();
 			SecretKey llave = certificado.descifrarMensaje(bytesM);
+			//cifrarSimetrico
+			print.println("ACT1:");
 			
-			//descifrar
+			//cifrarHash
+			print.println("ACT2:");
+			
+			String mensajeFinal = buff.readLine();
+			if( mensajeFinal.equals("RTA:OK")){
+				System.out.println("Las coordenadas se han enviado correctamente");
+				cerrarConexion();
+				System.out.println("Se cerro la conexion");
+			}
+			else{
+				System.out.println("Las coordenadas no se enviaron correctamente");
+				cerrarConexion();
+				System.out.println("Se cerro la conexion");
+			}
 		}
 		else{
 			System.out.println("No se recibio INIT, sino:" + mensaje);

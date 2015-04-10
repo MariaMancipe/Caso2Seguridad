@@ -107,6 +107,28 @@ public class Certificado
 		}
 	}
 	
+	public String cifrarCoordenadasSimetrica( SecretKey llave, String coordenadas ){
+		byte [] cipheredText;
+		try {
+
+		Cipher cipher = Cipher.getInstance(UnidadDistribucion.PADDING);
+		
+		byte [] clearText = coordenadas.getBytes();
+		cipher.init(Cipher.ENCRYPT_MODE, llave);
+
+		cipheredText = cipher.doFinal(clearText);
+
+		String s2 = new String (cipheredText);
+		
+		return s2;
+		}
+		catch (Exception e) {
+		System.out.println("Excepcion cifrando coordenadas (simetrica): " + e.getMessage());
+		return null;
+		}
+		
+	}
+	
 	public KeyPair darLlaves(){
 		return llaves;
 	};
