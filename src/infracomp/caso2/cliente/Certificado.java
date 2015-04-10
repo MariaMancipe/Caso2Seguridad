@@ -67,11 +67,11 @@ public class Certificado
 		certificateGenerator.setSubjectDN(firma);
 		certificateGenerator.setIssuerDN(firma);
 		certificateGenerator.setNotBefore(fechaInicio);
-		certificateGenerator.setNotBefore(fechaFin);
+		certificateGenerator.setNotAfter(fechaFin);
 		certificateGenerator.setPublicKey(llaves.getPublic());
 		//Aqui puede haber un error
 		
-		certificateGenerator.setSignatureAlgorithm("SHA256withRSA");
+		certificateGenerator.setSignatureAlgorithm("SHA256WITHRSA");
 		certificado = certificateGenerator.generate(llaves.getPrivate());
 	};
 	

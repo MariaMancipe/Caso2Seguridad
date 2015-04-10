@@ -59,7 +59,7 @@ public class UnidadDistribucion {
 		
 		try
 		{
-			socket = new Socket("infracomp.virtual.uniandes.edu.co", PUERTO_SIN_SEGURIDAD);
+			socket = new Socket("infracomp.virtual.uniandes.edu.co", PUERTO_SEGURIDAD);
 			System.out.println(socket.isConnected());
 			print = new PrintWriter(socket.getOutputStream());
 			input = socket.getInputStream();
@@ -91,6 +91,7 @@ public class UnidadDistribucion {
 			pasos[0]=true;
 
 			String mensaje1 = buff.readLine();
+			System.out.println(mensaje1);
 			if(mensaje1 == null){
 				System.out.println("No se ha recibido ningún mensaje");
 			}
