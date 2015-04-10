@@ -129,6 +129,10 @@ public class Certificado
 		
 	}
 	
+	public void cifrarHashAsimetrico( ){
+		
+	}
+	
 	public KeyPair darLlaves(){
 		return llaves;
 	};
