@@ -24,20 +24,46 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 
+/**
+ * 
+ * @author Maria Paula Mancipe Diaz 
+ * @author Santiago Abisambra Castillo
+ * Esta clase se encarga de generar los certificados, las llaves asimetricas, y el codigo criptografico de hash
+ * Tambien se encarga de cifrar y descrifrar simetrica y asimetricamente
+ *
+ */
 public class Certificado
 {
+	//---------------------------------------------------------------
+	//Atributos
+	//---------------------------------------------------------------
+	/**
+	 * Certificado del cliente
+	 */
 	private X509Certificate certificado;
 	
+	/**
+	 * fecha de inicio del certificado
+	 */
 	private Date fechaInicio;
 	
+	/**
+	 * Fecha de fin del certificado
+	 */
 	private Date fechaFin;
 	
+	/**
+	 * Llaves asimetricas del cliente
+	 */
 	private KeyPair llaves;
 	
-	private KeyPair llavesServidor;
+	//---------------------------------------------------------------
+	//Constructor
+	//---------------------------------------------------------------
 	
-	private SecretKey llaveSimetrica;
-	
+	/**
+	 * Se llama al metodo generarLlaves y al de generarCertificado 
+	 */
 	public Certificado() {
 		try {
 			generarLlaves();
@@ -55,6 +81,18 @@ public class Certificado
 		
 	}
 	
+	
+	//---------------------------------------------------------------
+	//Metodos
+	//---------------------------------------------------------------
+	
+	/**
+	 * Genera las llaves asimetricas del cliente
+	 * Las asigna al atributo llaves
+	 * RSA
+	 * 1024 BITS
+	 * @throws NoSuchAlgorithmException
+	 */
 	private void generarLlaves( ) throws NoSuchAlgorithmException{
 		
 		KeyPairGenerator generador = KeyPairGenerator.getInstance(UnidadDistribucion.ASIMETRICO);
@@ -62,6 +100,17 @@ public class Certificado
 		llaves = generador.generateKeyPair();
 	}
 	
+	/**
+	 * Genera el certificado X509
+	 * El certificado dura 1 mes desde el dia en que se crea
+	 * La firma es MariaMancipeYSantiagoAbisambra
+	 * El algoritmo es HMACSHA256 con RSA
+	 * @throws CertificateEncodingException
+	 * @throws InvalidKeyException
+	 * @throws IllegalStateException
+	 * @throws NoSuchAlgorithmException
+	 * @throws SignatureException
+	 */
 	private void generarCertificado( ) throws CertificateEncodingException, InvalidKeyException, IllegalStateException, NoSuchAlgorithmException, SignatureException{
 		
 		fechaInicio = new Date(System.currentTimeMillis());
@@ -82,6 +131,12 @@ public class Certificado
 		certificado = certificateGenerator.generate(llaves.getPrivate());
 	};
 	
+	/**
+	 * Crea el certificado a partir de los bytes que son recibidos por el socket del servidor
+	 * Se verifica la validez del certificado
+	 * @param recibidosEl flujo de bytes recibidos
+	 * @return La llave publica del servidor
+	 */
 	public PublicKey crearCertificado( byte[] recibidos){
 		
 		InputStream inCer = new ByteArrayInputStream(recibidos);
@@ -99,13 +154,18 @@ public class Certificado
 		
 	}
 	
+	/**
+	 * Descifra el mensaje que viene con la llave simetrica del servidor
+	 * AES
+	 * @param recibidos La cadena de texto recibida convertida en un array de bytes
+	 * @return La llave simetrica del servidor
+	 */
 	public SecretKey descifrarMensaje( byte[] recibidos ){
 		try {
 			Cipher cipher = Cipher.getInstance(UnidadDistribucion.ASIMETRICO);
 			cipher.init(Cipher.DECRYPT_MODE, llaves.getPrivate());
 			byte [] clearText = cipher.doFinal(recibidos);
 			SecretKey llave = new SecretKeySpec(clearText, 0, clearText.length, UnidadDistribucion.SIMETRICO);
-			llaveSimetrica = llave;
 			return llave;
 			
 		} catch (Exception e) {
@@ -116,6 +176,15 @@ public class Certificado
 		}
 	}
 	
+	
+	/**
+	 * Cifra las coordenadas con la llave simetrica del servidor
+	 * AES
+	 * La cadena de texto es convertida en hexadecimales
+	 * @param llave la llave simetrica del servidor
+	 * @param coordenadas las coordenadas
+	 * @return Una cadena de texto con las coordenadas cifradas 
+	 */
 	public String cifrarCoordenadasSimetrica(SecretKey llave,  String coordenadas ){
 		byte [] cipheredText;
 		try {
@@ -139,20 +208,60 @@ public class Certificado
 		
 	}
 	
-	public void cifrarHashAsimetrico(PublicKey llavePS, String coordenadas ){
+	/**
+	 * Genera el codigo criptografico de hash de las coordenadas
+	 * HMACSHA256
+	 * @param llaveSimetrica La llave simetrica del servidor
+	 * @param coordenadas las coordenadas de la unidad de distribucion
+	 * @return El arreglo de bytes con el codigo criptografico de hash
+	 */
+	public byte[] encriptarHash(SecretKey llaveSimetrica, String coordenadas ){
 		try {
 			Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
-		} catch (NoSuchAlgorithmException e) {
+			sha256_HMAC.init(llaveSimetrica);
+			byte[] codigo = sha256_HMAC.doFinal(coordenadas.getBytes());
+			return codigo;
+		} catch (Exception e) {
 			System.out.println("Hubo un error generarando el codigo de integridad: " + e.getMessage());
 			e.printStackTrace();
+			return null;
 		}
 		
 	}
 	
+	/**
+	 * Cifra con la llave publica del servidor el codigo criptografico de hash de las coordenadas
+	 * RSA
+	 * El arreglo de bytes cifrado se convierte en hexadecimales
+	 * @param llavePS La llave publica del servidor
+	 * @param hash El codigo criptografico de hash de las coordenadas
+	 * @return
+	 */
+	public String cifrarAsimetrico(PublicKey llavePS, byte[] hash){
+		try{
+			Cipher cipher = Cipher.getInstance("RSA");
+					
+			cipher.init(Cipher.ENCRYPT_MODE, llavePS);
+			byte [] cipheredText = cipher.doFinal(hash);
+			String cifrado = DatatypeConverter.printHexBinary(cipheredText);
+			return cifrado;
+		}catch(Exception e){
+			System.out.println("Hubo un error cifrando asimetricamente: " + e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	/**
+	 * @return el par de llaves asimetricas del cliente
+	 */
 	public KeyPair darLlaves(){
 		return llaves;
 	}
 	
+	/**
+	 * @return el certificado x509 del cliente
+	 */
 	public X509Certificate darCertificado(){
 		return certificado;
 	}
