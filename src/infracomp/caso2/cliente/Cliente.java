@@ -91,7 +91,7 @@ public class Cliente {
 							//Cifrar coordenadas con llave simetrica del servidor
 							String llaveCifrada = mensajes3[1];
 							//De hexadecimal a binario
-							byte[] bytesLlaveC = DatatypeConverter.parseHexBinary(llaveCifrada);
+							byte[] bytesLlaveC = cer.deStringByte(llaveCifrada);
 							//descifra el mensaje y guarda la llave simetrica en un String(el metodo se puede consultar en la clase Certificado)
 							SecretKey llaveSimetrica = cer.descifrarMensaje(bytesLlaveC);
 							System.out.println("Si llego a descifrar la llave");

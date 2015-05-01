@@ -34,6 +34,15 @@ import org.bouncycastle.x509.X509V3CertificateGenerator;
  */
 public class Certificado
 {
+	
+	public final static String ASIMETRICO = "RSA";
+	
+	public final static String SIMETRICO = "AES";
+	
+	public final static String HMAC = "HMACSHA256";
+	
+	public final static String PADDING = "AES/ECB/PKCS5Padding";
+	
 	//---------------------------------------------------------------
 	//Atributos
 	//---------------------------------------------------------------
@@ -95,7 +104,7 @@ public class Certificado
 	 */
 	private void generarLlaves( ) throws NoSuchAlgorithmException{
 		
-		KeyPairGenerator generador = KeyPairGenerator.getInstance(UnidadDistribucion.ASIMETRICO);
+		KeyPairGenerator generador = KeyPairGenerator.getInstance(ASIMETRICO);
 		generador.initialize(1024, new SecureRandom());
 		llaves = generador.generateKeyPair();
 	}
@@ -162,10 +171,10 @@ public class Certificado
 	 */
 	public SecretKey descifrarMensaje( byte[] recibidos ){
 		try {
-			Cipher cipher = Cipher.getInstance(UnidadDistribucion.ASIMETRICO);
+			Cipher cipher = Cipher.getInstance(ASIMETRICO);
 			cipher.init(Cipher.DECRYPT_MODE, llaves.getPrivate());
 			byte [] clearText = cipher.doFinal(recibidos);
-			SecretKey llave = new SecretKeySpec(clearText, 0, clearText.length, UnidadDistribucion.SIMETRICO);
+			SecretKey llave = new SecretKeySpec(clearText, 0, clearText.length, SIMETRICO);
 			return llave;
 			
 		} catch (Exception e) {
@@ -189,13 +198,13 @@ public class Certificado
 		byte [] cipheredText;
 		try {
 
-		Cipher cipher = Cipher.getInstance(UnidadDistribucion.PADDING);
+		Cipher cipher = Cipher.getInstance(PADDING);
 		
 		byte [] clearText = coordenadas.getBytes();
 		cipher.init(Cipher.ENCRYPT_MODE, llave);
 
 		cipheredText = cipher.doFinal(clearText);
-		String hexa = DatatypeConverter.printHexBinary(cipheredText);
+		String hexa = deByteString(cipheredText);
 
 		String s2 = hexa;
 		
@@ -243,13 +252,31 @@ public class Certificado
 					
 			cipher.init(Cipher.ENCRYPT_MODE, llavePS);
 			byte [] cipheredText = cipher.doFinal(hash);
-			String cifrado = DatatypeConverter.printHexBinary(cipheredText);
+			String cifrado = deByteString(cipheredText);
 			return cifrado;
 		}catch(Exception e){
 			System.out.println("Hubo un error cifrando asimetricamente: " + e.getMessage());
 			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	public byte[] deStringByte(String cadena)
+	{
+		byte[] ret = new byte[cadena.length()/2];
+		for (int i = 0 ; i < ret.length ; i++) {
+			ret[i] = (byte) Integer.parseInt(cadena.substring(i*2,(i+1)*2), 16);
+		}
+		return ret;
+	}
+	
+	public String deByteString(byte[] bytes){
+		String ret = "";
+		for (int i = 0 ; i < bytes.length ; i++) {
+			String g = Integer.toHexString(((char)bytes[i])&0x00ff);
+			ret += (g.length()==1?"0":"") + g;
+		}
+		return ret;
 	}
 	
 	/**
