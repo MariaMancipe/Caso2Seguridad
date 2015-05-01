@@ -8,23 +8,15 @@ import java.net.Socket;
 import java.security.PublicKey;
 
 import javax.crypto.SecretKey;
-import javax.xml.bind.DatatypeConverter;
 
-/**
- * 
- * @author Maria Paula Mancipe Diaz 
- * @author Santiago Abisambra Castillo
- * Esta clase se encarga de comunicarse con el servidor y de ejecutar el protocolo
- *
- */
-public class Cliente {
+public class ClienteSinSeguridad {
 	
 	public static void main(String[] args)
 	{
 		try
 		{
 			//Se crea un nuevo socket y se conecta al puerto 44
-			Socket socket = new Socket("infracomp.virtual.uniandes.edu.co", 443);
+			Socket socket = new Socket("infracomp.virtual.uniandes.edu.co", 80);
 			System.out.println(socket.isConnected());
 			InputStream input = socket.getInputStream();
 			BufferedReader buff =  new BufferedReader(new InputStreamReader(input));
@@ -88,31 +80,15 @@ public class Cliente {
 						if(mensajes3[0].equals("INIT")){
 							System.out.println("si llego a INIT");
 							
-							//Cifrar coordenadas con llave simetrica del servidor
-							String llaveCifrada = mensajes3[1];
-							//De hexadecimal a binario
-							byte[] bytesLlaveC = cer.deStringByte(llaveCifrada);
-							//descifra el mensaje y guarda la llave simetrica en un String(el metodo se puede consultar en la clase Certificado)
-							SecretKey llaveSimetrica = cer.descifrarMensaje(bytesLlaveC);
-							System.out.println("Si llego a descifrar la llave");
-							
-							//coordenadas
-							String coordenadas = "41 24.2028,2 10.4418";
-							//Coordenadas cifradas con la llave simetrica del servidor(el metodo se puede consultar en la clase Certificado)
-							String coordenadasS = cer.cifrarCoordenadasSimetrica(llaveSimetrica, coordenadas);
-							//Se envian las coordenadas al servidor
-							print.println("ACT1:" + coordenadasS);
+					
+							print.println("ACT1" );
 							print.flush();
-							System.out.println(coordenadasS);
-							System.out.println("Si llego a coordenadas simetricas");
+							System.out.println("Si llego a ACT1");
 							
 							//codigo criptografico de hash de las coordenadas cifrado con la llave publica del servidor
-							byte[] codigo = cer.encriptarHash(llaveSimetrica, coordenadas);
-							String cifrado = cer.cifrarAsimetrico(llavePublicaServidor, codigo);
-							print.println("ACT2:" + cifrado);
-							print.flush();
-							System.out.println(cifrado);
-							System.out.println("Si llego a coordenadas hash");
+							
+							print.println("ACT2");
+							System.out.println("Si llego a ACT2");
 							
 							String mensajef = buff.readLine();
 							System.out.println(mensajef);
