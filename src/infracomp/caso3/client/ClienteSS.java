@@ -1,4 +1,6 @@
-package infracomp.caso2.cliente;
+package infracomp.caso3.client;
+
+import infracomp.caso2.cliente.Certificado;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -7,24 +9,20 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.security.PublicKey;
 
-import javax.crypto.SecretKey;
-import javax.xml.bind.DatatypeConverter;
+public class ClienteSS {
 
-/**
- * 
- * @author Maria Paula Mancipe Diaz 
- * @author Santiago Abisambra Castillo
- * Esta clase se encarga de comunicarse con el servidor y de ejecutar el protocolo
- *
- */
-public class Cliente {
+	public ClienteSS( )
+	{
+		
+	}
 	
-	public static void main(String[] args)
+	public static void comunicacion()
 	{
 		try
 		{
 			//Se crea un nuevo socket y se conecta al puerto 44
-			Socket socket = new Socket("186.31.40.7", 443);
+			Socket socket = new Socket("186.31.40.7", 80);
+			System.out.println(socket.isConnected());
 			System.out.println(socket.isConnected());
 			InputStream input = socket.getInputStream();
 			BufferedReader buff =  new BufferedReader(new InputStreamReader(input));
@@ -78,6 +76,7 @@ public class Cliente {
 						//Recibe los bytes del certificado del servidor
 						input.read(recibidos, 0, size);
 						//Se crea el certificado del servidor a partir del arreglo de bytes recibidos y se obtiene la llave publica del servidor
+						@SuppressWarnings("unused")
 						PublicKey llavePublicaServidor = cer.crearCertificado(recibidos);
 						System.out.println("si llego a certificado servidor");
 						
@@ -88,31 +87,16 @@ public class Cliente {
 						if(mensajes3[0].equals("INIT")){
 							System.out.println("si llego a INIT");
 							
-							//Cifrar coordenadas con llave simetrica del servidor
-							String llaveCifrada = mensajes3[1];
-							//De hexadecimal a binario
-							byte[] bytesLlaveC = cer.deStringByte(llaveCifrada);
-							//descifra el mensaje y guarda la llave simetrica en un String(el metodo se puede consultar en la clase Certificado)
-							SecretKey llaveSimetrica = cer.descifrarMensaje(bytesLlaveC);
-							System.out.println("Si llego a descifrar la llave");
-							
-							//coordenadas
-							String coordenadas = "41 24.2028,2 10.4418";
-							//Coordenadas cifradas con la llave simetrica del servidor(el metodo se puede consultar en la clase Certificado)
-							String coordenadasS = cer.cifrarCoordenadasSimetrica(llaveSimetrica, coordenadas);
-							//Se envian las coordenadas al servidor
-							print.println("ACT1:" + coordenadasS);
+					
+							print.println("ACT1" );
 							print.flush();
-							System.out.println(coordenadasS);
-							System.out.println("Si llego a coordenadas simetricas");
+							System.out.println("Si llego a ACT1");
 							
 							//codigo criptografico de hash de las coordenadas cifrado con la llave publica del servidor
-							byte[] codigo = cer.encriptarHash(llaveSimetrica, coordenadas);
-							String cifrado = cer.cifrarAsimetrico(llavePublicaServidor, codigo);
-							print.println("ACT2:" + cifrado);
+							
+							print.println("ACT2");
 							print.flush();
-							System.out.println(cifrado);
-							System.out.println("Si llego a coordenadas hash");
+							System.out.println("Si llego a ACT2");
 							
 							String mensajef = buff.readLine();
 							System.out.println(mensajef);
@@ -122,8 +106,6 @@ public class Cliente {
 							}else{
 								System.out.println("Hubo un error en el envio de coordenadas: " + mensajef);
 							}
-							
-							
 						}else{
 							System.out.println("No comienza con INIT: sino: " + mensaje3);
 						}
@@ -153,5 +135,4 @@ public class Cliente {
 		
 		
 	}
-
 }

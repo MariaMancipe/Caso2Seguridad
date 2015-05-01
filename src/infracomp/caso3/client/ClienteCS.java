@@ -1,4 +1,6 @@
-package infracomp.caso2.cliente;
+package infracomp.caso3.client;
+
+import infracomp.caso2.cliente.Certificado;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -8,18 +10,14 @@ import java.net.Socket;
 import java.security.PublicKey;
 
 import javax.crypto.SecretKey;
-import javax.xml.bind.DatatypeConverter;
 
-/**
- * 
- * @author Maria Paula Mancipe Diaz 
- * @author Santiago Abisambra Castillo
- * Esta clase se encarga de comunicarse con el servidor y de ejecutar el protocolo
- *
- */
-public class Cliente {
+public class ClienteCS {
 	
-	public static void main(String[] args)
+	public ClienteCS( ){
+		
+	}
+	
+	public static void comunicacion()
 	{
 		try
 		{

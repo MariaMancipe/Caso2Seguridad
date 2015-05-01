@@ -16,7 +16,8 @@ public class ClienteSinSeguridad {
 		try
 		{
 			//Se crea un nuevo socket y se conecta al puerto 44
-			Socket socket = new Socket("localhost", 80);
+			Socket socket = new Socket("186.31.40.7", 80);
+			System.out.println(socket.isConnected());
 			System.out.println(socket.isConnected());
 			InputStream input = socket.getInputStream();
 			BufferedReader buff =  new BufferedReader(new InputStreamReader(input));
