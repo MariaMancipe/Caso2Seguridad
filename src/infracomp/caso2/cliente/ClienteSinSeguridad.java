@@ -16,7 +16,7 @@ public class ClienteSinSeguridad {
 		try
 		{
 			//Se crea un nuevo socket y se conecta al puerto 44
-			Socket socket = new Socket("infracomp.virtual.uniandes.edu.co", 80);
+			Socket socket = new Socket("localhost", 80);
 			System.out.println(socket.isConnected());
 			InputStream input = socket.getInputStream();
 			BufferedReader buff =  new BufferedReader(new InputStreamReader(input));
@@ -88,6 +88,7 @@ public class ClienteSinSeguridad {
 							//codigo criptografico de hash de las coordenadas cifrado con la llave publica del servidor
 							
 							print.println("ACT2");
+							print.flush();
 							System.out.println("Si llego a ACT2");
 							
 							String mensajef = buff.readLine();
@@ -98,8 +99,6 @@ public class ClienteSinSeguridad {
 							}else{
 								System.out.println("Hubo un error en el envio de coordenadas: " + mensajef);
 							}
-							
-							
 						}else{
 							System.out.println("No comienza con INIT: sino: " + mensaje3);
 						}

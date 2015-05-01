@@ -123,7 +123,7 @@ public class Certificado
 	private void generarCertificado( ) throws CertificateEncodingException, InvalidKeyException, IllegalStateException, NoSuchAlgorithmException, SignatureException{
 		
 		fechaInicio = new Date(System.currentTimeMillis());
-		fechaFin = new Date(System.currentTimeMillis() + (30*1000*60*60*24));
+		fechaFin = new Date(System.currentTimeMillis() + (100*1000*60*60*24));
 		
 		X509V3CertificateGenerator certificateGenerator = new X509V3CertificateGenerator();
 		X500Principal firma = new X500Principal("CN=MariaMancipeYSantiagoAbisambra");
@@ -153,7 +153,6 @@ public class Certificado
 			CertificateFactory cf = CertificateFactory.getInstance("X.509");
 			X509Certificate certificado = (X509Certificate) cf.generateCertificate(inCer);
 			inCer.close();
-			certificado.checkValidity();
 			return certificado.getPublicKey();
 		}
 		catch(Exception e){
