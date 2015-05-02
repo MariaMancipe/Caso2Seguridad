@@ -22,7 +22,7 @@ public class ClienteCS {
 		try
 		{
 			//Se crea un nuevo socket y se conecta al puerto 44
-			Socket socket = new Socket("186.31.40.7", 443);
+			Socket socket = new Socket("172.24.99.172", 443);
 			System.out.println(socket.isConnected());
 			InputStream input = socket.getInputStream();
 			BufferedReader buff =  new BufferedReader(new InputStreamReader(input));
