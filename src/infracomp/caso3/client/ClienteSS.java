@@ -21,7 +21,7 @@ public class ClienteSS {
 		try
 		{
 			//Se crea un nuevo socket y se conecta al puerto 44
-			Socket socket = new Socket("186.31.40.7", 80);
+			Socket socket = new Socket("172.24.99.172", 80);
 			System.out.println(socket.isConnected());
 			System.out.println(socket.isConnected());
 			InputStream input = socket.getInputStream();
